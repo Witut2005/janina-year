@@ -1,0 +1,130 @@
+@let s = stats();
+
+<div class="tiles">
+  <div class="tile">
+    <span class="tile-label">Uzupełnione dni</span>
+    <span class="tile-value">{{ s.logged }}<small> / {{ s.elapsed }}</small></span>
+    <span class="tile-hint">{{ pct(s.coverage) }} roku do dziś</span>
+  </div>
+  <div class="tile">
+    <span class="tile-label"><ui-icon name="flame" /> Obecna seria</span>
+    <span class="tile-value">{{ s.currentStreak }}<small> dni</small></span>
+    <span class="tile-hint">dzień po dniu bez przerwy</span>
+  </div>
+  <div class="tile">
+    <span class="tile-label">Najdłuższa seria</span>
+    <span class="tile-value">{{ s.longestStreak }}<small> dni</small></span>
+    <span class="tile-hint">w {{ year() }} roku</span>
+  </div>
+  <div class="tile">
+    <span class="tile-label">Dziennik</span>
+    <span class="tile-value">{{ s.notes }}<small> notatek</small></span>
+    <span class="tile-hint">{{ s.photos }} zdjęć</span>
+  </div>
+</div>
+
+@if (!s.logged) {
+  <p class="empty">W {{ year() }} roku nie ma jeszcze żadnych wpisów. Statystyki pojawią się, gdy pokolorujesz kilka dni.</p>
+} @else {
+  @if (insights().length) {
+    <div class="insights">
+      @for (insight of insights(); track insight.label) {
+        <div class="insight">
+          <span class="tile-label">{{ insight.label }}</span>
+          <strong>{{ insight.value }}</strong>
+          @if (insight.hint) {
+            <span class="tile-hint">{{ insight.hint }}</span>
+          }
+        </div>
+      }
+    </div>
+  }
+
+  <section class="block">
+    <h3 class="section-title">Rozkład</h3>
+    <div class="dist">
+      @for (d of s.distribution; track d.option.id) {
+        <span class="dist-label">{{ d.option.label }}</span>
+        <span class="dist-track">
+          <span
+            class="dist-bar"
+            [style.width.%]="(d.share / maxShare()) * 100"
+            [style.background-color]="d.option.color"
+          ></span>
+        </span>
+        <span class="dist-value">{{ d.count }} <span class="muted">· {{ pct(d.share) }}</span></span>
+      }
+    </div>
+  </section>
+
+  <section class="block">
+    <div class="block-head">
+      <h3 class="section-title">Miesiące</h3>
+      <div class="legend">
+        @for (o of tracker().options; track o.id) {
+          <span class="legend-item"><span class="swatch" [style.background-color]="o.color"></span>{{ o.label }}</span>
+        }
+      </div>
+    </div>
+    <div class="columns">
+      @for (m of s.months; track $index) {
+        <div class="column" tabindex="0" [attr.aria-label]="monthNames[$index] + ': ' + m.logged + ' dni'">
+          <div class="column-plot">
+            <div class="column-stack" [style.height]="columnHeight(m)">
+              @for (c of m.counts; track c.option.id) {
+                @if (c.count) {
+                  <span class="segment" [style.flex-grow]="c.count" [style.background-color]="c.option.color"></span>
+                }
+              }
+            </div>
+          </div>
+          <span class="column-label">{{ m.label }}</span>
+          <div class="tip">
+            <strong>{{ monthNames[$index] }}</strong>
+            <span class="muted">{{ m.logged }} z {{ m.capacity }} dni</span>
+            @for (c of m.counts; track c.option.id) {
+              @if (c.count) {
+                <span class="tip-row">
+                  <span class="swatch" [style.background-color]="c.option.color"></span>
+                  {{ c.option.label }}<b>{{ c.count }}</b>
+                </span>
+              }
+            }
+          </div>
+        </div>
+      }
+    </div>
+  </section>
+
+  <section class="block">
+    <h3 class="section-title">Dni tygodnia</h3>
+    <div class="rows">
+      @for (w of s.weekdays; track $index) {
+        <span class="row-label">{{ w.label }}</span>
+        <div class="row-bar" tabindex="0" [attr.aria-label]="weekdayNames[$index] + ': ' + w.logged + ' dni'">
+          @for (c of w.counts; track c.option.id) {
+            @if (c.count) {
+              <span class="segment" [style.flex-grow]="c.count" [style.background-color]="c.option.color"></span>
+            }
+          }
+          @if (!w.logged) {
+            <span class="segment blank"></span>
+          }
+          <div class="tip">
+            <strong>{{ weekdayNames[$index] }}</strong>
+            <span class="muted">{{ w.logged }} dni</span>
+            @for (c of w.counts; track c.option.id) {
+              @if (c.count) {
+                <span class="tip-row">
+                  <span class="swatch" [style.background-color]="c.option.color"></span>
+                  {{ c.option.label }}<b>{{ pct(c.share) }}</b>
+                </span>
+              }
+            }
+          </div>
+        </div>
+        <span class="row-value">{{ w.logged }}</span>
+      }
+    </div>
+  </section>
+}

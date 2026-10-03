@@ -1,0 +1,169 @@
+<ui-sheet [label]="isNew() ? 'Nowy tracker' : 'Edytuj tracker'" [wide]="true" (dismiss)="closed.emit()">
+  @let d = draft();
+
+  <header class="sheet-header">
+    @if (isNew() && d) {
+      <button type="button" class="icon-btn" aria-label="Wróć do szablonów" (click)="draft.set(null)">
+        <ui-icon name="chevron-left" />
+      </button>
+    }
+    <div class="sheet-title">
+      <span class="eyebrow">{{ isNew() ? 'Nowy tracker' : 'Ustawienia trackera' }}</span>
+      <h2>{{ d ? (d.title || 'Bez nazwy') : 'Wybierz szablon' }}</h2>
+    </div>
+    <button type="button" class="icon-btn" aria-label="Zamknij" (click)="closed.emit()">
+      <ui-icon name="x" />
+    </button>
+  </header>
+
+  @if (!d) {
+    <div class="sheet-body">
+      <div class="templates">
+        @for (template of templates; track template.key) {
+          <button type="button" class="template" (click)="useTemplate(template)">
+            <span class="template-emoji">{{ template.emoji }}</span>
+            <span class="template-text">
+              <strong>{{ template.title }}</strong>
+              <span class="muted">{{ template.description }}</span>
+            </span>
+            <span class="template-swatches">
+              @for (o of template.options; track $index) {
+                <span [style.background-color]="o.color"></span>
+              }
+            </span>
+          </button>
+        }
+      </div>
+    </div>
+  } @else {
+    <div class="sheet-body">
+      <div class="identity">
+        <div>
+          <label class="field-label" for="tracker-emoji">Ikona</label>
+          <input
+            id="tracker-emoji"
+            class="input emoji-input"
+            maxlength="4"
+            [value]="d.emoji"
+            (input)="patch({ emoji: value($event) })"
+          />
+        </div>
+        <div class="grow">
+          <label class="field-label" for="tracker-title">Nazwa</label>
+          <input
+            id="tracker-title"
+            class="input"
+            placeholder="np. Nastrój, Woda, Medytacja"
+            maxlength="40"
+            [class.invalid]="submitted() && !d.title.trim()"
+            [value]="d.title"
+            (input)="patch({ title: value($event) })"
+          />
+        </div>
+      </div>
+      <div class="emoji-row">
+        @for (e of emojis; track e) {
+          <button type="button" class="emoji-chip" [class.active]="d.emoji === e" (click)="patch({ emoji: e })">
+            {{ e }}
+          </button>
+        }
+      </div>
+
+      <div class="field-label options-head">
+        <span>Opcje <span class="muted">{{ d.options.length }}/{{ maxOptions }}</span></span>
+        <span class="muted hint">od najlepszej do najgorszej</span>
+      </div>
+
+      <ul class="option-list">
+        @for (option of d.options; track option.id; let i = $index, first = $first, last = $last) {
+          <li>
+            <div class="option-row">
+              <button
+                type="button"
+                class="color-btn"
+                [style.background-color]="option.color"
+                [class.open]="colorFor() === option.id"
+                [attr.aria-label]="'Zmień kolor opcji ' + (option.label || (i + 1))"
+                (click)="colorFor.set(colorFor() === option.id ? null : option.id)"
+              ></button>
+              <input
+                class="input"
+                placeholder="Etykieta"
+                maxlength="30"
+                [class.invalid]="submitted() && !option.label.trim()"
+                [value]="option.label"
+                (input)="patchOption(option.id, { label: value($event) })"
+              />
+              <div class="row-actions">
+                <button type="button" class="icon-btn small" aria-label="Przesuń wyżej" [disabled]="first" (click)="moveOption(i, -1)">
+                  <ui-icon name="chevron-up" />
+                </button>
+                <button type="button" class="icon-btn small" aria-label="Przesuń niżej" [disabled]="last" (click)="moveOption(i, 1)">
+                  <ui-icon name="chevron-down" />
+                </button>
+                <button type="button" class="icon-btn small danger" aria-label="Usuń opcję" (click)="removeOption(option.id)">
+                  <ui-icon name="trash" />
+                </button>
+              </div>
+            </div>
+            @if (colorFor() === option.id) {
+              <div class="palette">
+                @for (color of palette; track color) {
+                  <button
+                    type="button"
+                    class="swatch-btn"
+                    [style.background-color]="color"
+                    [class.active]="color.toLowerCase() === option.color.toLowerCase()"
+                    [attr.aria-label]="'Kolor ' + color"
+                    (click)="pickColor(option.id, color)"
+                  ></button>
+                }
+                <label class="swatch-btn custom" title="Własny kolor">
+                  <input type="color" [value]="option.color" (input)="patchOption(option.id, { color: value($event) })" />
+                  <ui-icon name="plus" />
+                </label>
+              </div>
+            }
+          </li>
+        }
+      </ul>
+
+      @if (d.options.length < maxOptions) {
+        <button type="button" class="btn btn-soft add-option" (click)="addOption()">
+          <ui-icon name="plus" /> Dodaj opcję
+        </button>
+      }
+
+      @if (submitted() && errors().length) {
+        <ul class="errors">
+          @for (e of errors(); track e) {
+            <li>{{ e }}</li>
+          }
+        </ul>
+      }
+
+      <div class="preview">
+        <span class="field-label">Podgląd</span>
+        <div class="preview-pixels">
+          @for (o of d.options; track o.id) {
+            <span class="preview-pixel" [style.background-color]="o.color" [attr.title]="o.label"></span>
+          }
+        </div>
+      </div>
+    </div>
+
+    <footer class="sheet-footer">
+      @if (canDelete()) {
+        <button type="button" class="btn" [class.btn-danger]="confirmDelete()" [class.btn-ghost]="!confirmDelete()" (click)="remove()">
+          <ui-icon name="trash" />
+          {{ confirmDelete() ? 'Na pewno usunąć?' : 'Usuń' }}
+        </button>
+      }
+      <span class="spacer"></span>
+      <button type="button" class="btn btn-ghost" (click)="closed.emit()">Anuluj</button>
+      <button type="button" class="btn btn-primary" (click)="save()">
+        {{ isNew() ? 'Utwórz' : 'Zapisz' }}
+      </button>
+    </footer>
+  }
+</ui-sheet>

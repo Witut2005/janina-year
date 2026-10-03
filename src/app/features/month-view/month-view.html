@@ -1,0 +1,64 @@
+<div class="calendar">
+  @for (weekday of weekdays; track weekday) {
+    <span class="weekday">{{ weekday }}</span>
+  }
+  @for (blank of leading(); track $index) {
+    <span></span>
+  }
+  @for (cell of cells(); track cell.key) {
+    <button
+      type="button"
+      class="day"
+      [class.filled]="!!cell.option"
+      [class.future]="cell.future"
+      [class.today]="cell.today"
+      [style.background-color]="cell.option?.color"
+      [style.color]="cell.ink"
+      [disabled]="cell.future"
+      [attr.title]="cell.label"
+      [attr.aria-label]="cell.label"
+      (click)="pick.emit(cell.key)"
+    >
+      <span class="num">{{ cell.day }}</span>
+      @if (cell.note || cell.photos) {
+        <span class="marks">
+          @if (cell.note) {
+            <ui-icon name="note" />
+          }
+          @if (cell.photos) {
+            <ui-icon name="image" />
+          }
+        </span>
+      }
+    </button>
+  }
+</div>
+
+<section class="journal">
+  <h3 class="section-title">Wpisy w tym miesiącu</h3>
+  @for (item of journal(); track item.key) {
+    <button type="button" class="journal-item" (click)="pick.emit(item.key)">
+      <span class="dot" [style.background-color]="item.option?.color ?? 'var(--pixel-empty)'"></span>
+      <span class="journal-body">
+        <span class="journal-meta">
+          <strong>{{ item.date }}</strong>
+          @if (item.option) {
+            <span class="muted">· {{ item.option.label }}</span>
+          }
+        </span>
+        @if (item.note) {
+          <span class="journal-note">{{ item.note }}</span>
+        }
+        @if (item.photos.length) {
+          <span class="journal-photos">
+            @for (photo of item.photos; track photo) {
+              <ui-photo [photoId]="photo" />
+            }
+          </span>
+        }
+      </span>
+    </button>
+  } @empty {
+    <p class="empty">Brak notatek i zdjęć. Kliknij dzień, aby dodać wpis do dziennika.</p>
+  }
+</section>

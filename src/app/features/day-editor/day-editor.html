@@ -1,0 +1,94 @@
+<ui-sheet [label]="title()" (dismiss)="dismiss()">
+  <header class="sheet-header">
+    <button type="button" class="icon-btn" aria-label="Poprzedni dzień" (click)="go(-1)">
+      <ui-icon name="chevron-left" />
+    </button>
+    <div class="day-title">
+      <span class="eyebrow">{{ tracker().emoji }} {{ tracker().title }}{{ isToday() ? ' · dziś' : '' }}</span>
+      <h2>{{ title() }}</h2>
+    </div>
+    <button type="button" class="icon-btn" aria-label="Następny dzień" [disabled]="!canGoNext()" (click)="go(1)">
+      <ui-icon name="chevron-right" />
+    </button>
+  </header>
+
+  <div class="sheet-body">
+    <div class="options" role="radiogroup" aria-label="Wybierz kolor dnia">
+      @for (option of tracker().options; track option.id; let i = $index) {
+        @let selected = entry().optionId === option.id;
+        <button
+          type="button"
+          role="radio"
+          class="option"
+          [class.selected]="selected"
+          [attr.aria-checked]="selected"
+          [style.--option-color]="option.color"
+          (click)="choose(option.id)"
+        >
+          <span class="option-swatch" [style.background-color]="option.color" [style.color]="inkOn(option.color)">
+            @if (selected) {
+              <ui-icon name="check" />
+            }
+          </span>
+          <span class="option-label">{{ option.label }}</span>
+          @if (i < 9) {
+            <kbd>{{ i + 1 }}</kbd>
+          }
+        </button>
+      }
+    </div>
+
+    <label class="field-label" for="day-note">Notatka</label>
+    <textarea
+      id="day-note"
+      class="textarea"
+      rows="4"
+      placeholder="Co dziś się wydarzyło? Za co jesteś wdzięczny?"
+      [value]="entry().note ?? ''"
+      (input)="setNote($event)"
+    ></textarea>
+
+    <div class="field-label">
+      Zdjęcia <span class="muted">{{ entry().photos?.length ?? 0 }}/{{ maxPhotos }}</span>
+    </div>
+    <div class="photos">
+      @for (id of entry().photos ?? []; track id) {
+        <div class="photo-tile">
+          <button type="button" class="photo-open" aria-label="Powiększ zdjęcie" (click)="viewing.set(id)">
+            <ui-photo [photoId]="id" />
+          </button>
+          <button type="button" class="photo-remove" aria-label="Usuń zdjęcie" (click)="removePhoto(id)">
+            <ui-icon name="x" />
+          </button>
+        </div>
+      }
+      @if ((entry().photos?.length ?? 0) < maxPhotos) {
+        <label class="photo-add" [class.busy]="uploading()">
+          <input type="file" accept="image/*" multiple (change)="addPhotos($event)" [disabled]="uploading()" />
+          @if (uploading()) {
+            <span class="spinner"></span>
+          } @else {
+            <ui-icon name="plus" />
+            <span>Dodaj</span>
+          }
+        </label>
+      }
+    </div>
+  </div>
+
+  <footer class="sheet-footer">
+    <button type="button" class="btn btn-ghost" [disabled]="isEmpty()" (click)="clearDay()">
+      <ui-icon name="reset" /> Wyczyść
+    </button>
+    <button type="button" class="btn btn-primary" (click)="closed.emit()">Gotowe</button>
+  </footer>
+</ui-sheet>
+
+@if (viewing(); as id) {
+  <div class="lightbox" role="dialog" aria-label="Podgląd zdjęcia" (click)="viewing.set(null)">
+    <ui-photo [photoId]="id" />
+    <button type="button" class="icon-btn lightbox-close" aria-label="Zamknij podgląd">
+      <ui-icon name="x" />
+    </button>
+  </div>
+}

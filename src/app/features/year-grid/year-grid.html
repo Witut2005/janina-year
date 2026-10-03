@@ -1,0 +1,29 @@
+<div class="year-grid" role="grid" [attr.aria-label]="'Rok ' + year()">
+  <span class="corner"></span>
+  @for (letter of monthLetters; track $index) {
+    <span class="month-head" [attr.title]="monthNames[$index]">{{ letter }}</span>
+  }
+
+  @for (row of rows(); track $index; let dayIndex = $index) {
+    <span class="day-head">{{ dayIndex + 1 }}</span>
+    @for (cell of row; track $index) {
+      @if (cell) {
+        <button
+          type="button"
+          class="pixel"
+          [class.filled]="!!cell.color"
+          [class.future]="cell.future"
+          [class.today]="cell.today"
+          [class.marked]="cell.marked"
+          [style.background-color]="cell.color"
+          [disabled]="cell.future"
+          [attr.title]="cell.label"
+          [attr.aria-label]="cell.label"
+          (click)="pick.emit(cell.key)"
+        ></button>
+      } @else {
+        <span class="pixel none"></span>
+      }
+    }
+  }
+</div>

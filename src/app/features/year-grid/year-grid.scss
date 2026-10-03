@@ -1,0 +1,90 @@
+:host {
+  display: block;
+}
+
+.year-grid {
+  display: grid;
+  grid-template-columns: 1.75rem repeat(12, minmax(0, 1fr));
+  gap: 3px;
+  max-width: 400px;
+  margin: 0 auto;
+}
+
+.month-head,
+.day-head {
+  font-size: 0.6875rem;
+  font-weight: 600;
+  color: var(--muted);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  user-select: none;
+}
+
+.month-head {
+  padding-bottom: 4px;
+}
+
+.day-head {
+  justify-content: flex-end;
+  padding-right: 6px;
+  font-variant-numeric: tabular-nums;
+}
+
+.pixel {
+  position: relative;
+  aspect-ratio: 1;
+  border: 0;
+  padding: 0;
+  border-radius: 4px;
+  background: var(--pixel-empty);
+  cursor: pointer;
+  transition:
+    transform 120ms ease,
+    box-shadow 120ms ease;
+
+  &:hover:not(:disabled) {
+    transform: scale(1.18);
+    z-index: 1;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.12);
+  }
+
+  &:focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 1px;
+    z-index: 2;
+  }
+
+  &.future {
+    background: var(--pixel-future);
+    cursor: default;
+  }
+
+  &.today {
+    box-shadow:
+      0 0 0 2px var(--surface),
+      0 0 0 4px var(--accent);
+    z-index: 1;
+  }
+
+  &.marked::after {
+    content: '';
+    position: absolute;
+    top: 3px;
+    right: 3px;
+    width: 4px;
+    height: 4px;
+    border-radius: 50%;
+    background: var(--accent);
+  }
+
+  &.marked.filled::after {
+    background: #fff;
+    box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.15);
+  }
+
+  &.none {
+    background: transparent;
+    cursor: default;
+  }
+}

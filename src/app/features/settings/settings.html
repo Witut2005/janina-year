@@ -1,0 +1,69 @@
+<ui-sheet label="Ustawienia" (dismiss)="closed.emit()">
+  <header class="sheet-header">
+    <div class="sheet-title">
+      <span class="eyebrow">JaninaYear</span>
+      <h2>Ustawienia</h2>
+    </div>
+    <button type="button" class="icon-btn" aria-label="Zamknij" (click)="closed.emit()">
+      <ui-icon name="x" />
+    </button>
+  </header>
+
+  <div class="sheet-body">
+    <h3 class="section-title">Trackery</h3>
+    <ul class="tracker-list">
+      @for (t of store.trackers(); track t.id; let first = $first, last = $last) {
+        <li>
+          <span class="tracker-emoji">{{ t.emoji }}</span>
+          <span class="tracker-info">
+            <strong>{{ t.title }}</strong>
+            <span class="muted">{{ entryCount(t.id) }} dni · {{ t.options.length }} opcji</span>
+          </span>
+          <button type="button" class="icon-btn small" aria-label="Przesuń wyżej" [disabled]="first" (click)="store.moveTracker(t.id, -1)">
+            <ui-icon name="chevron-up" />
+          </button>
+          <button type="button" class="icon-btn small" aria-label="Przesuń niżej" [disabled]="last" (click)="store.moveTracker(t.id, 1)">
+            <ui-icon name="chevron-down" />
+          </button>
+          <button type="button" class="icon-btn small" aria-label="Edytuj" (click)="editTracker(t.id)">
+            <ui-icon name="edit" />
+          </button>
+        </li>
+      }
+    </ul>
+
+    <h3 class="section-title">Twoje dane</h3>
+    <div class="local-note">
+      <ui-icon name="lock" />
+      <p>
+        Wszystko zostaje na tym urządzeniu – wpisy w pamięci przeglądarki, zdjęcia w IndexedDB. Nic nie jest wysyłane na
+        serwer. Rób od czasu do czasu kopię zapasową.
+        @if (usage(); as u) {
+          <br /><span class="muted">Zajęte miejsce: {{ u }}</span>
+        }
+      </p>
+    </div>
+
+    <div class="actions">
+      <button type="button" class="btn btn-soft" [disabled]="busy()" (click)="exportBackup()">
+        <ui-icon name="download" /> Eksportuj kopię
+      </button>
+      <label class="btn btn-soft" [class.disabled]="busy()">
+        <input type="file" accept="application/json,.json" (change)="importBackup($event)" [disabled]="busy()" />
+        <ui-icon name="upload" /> Importuj kopię
+      </label>
+      @if (persisted() === false) {
+        <button type="button" class="btn btn-ghost" (click)="persist()">
+          <ui-icon name="lock" /> Chroń dane przed czyszczeniem
+        </button>
+      }
+    </div>
+    <p class="muted small">Import zastępuje wszystkie obecne trackery, wpisy i zdjęcia.</p>
+
+    <h3 class="section-title danger-title">Strefa niebezpieczna</h3>
+    <button type="button" class="btn" [class.btn-danger]="confirmReset()" [class.btn-ghost]="!confirmReset()" (click)="reset()">
+      <ui-icon name="trash" />
+      {{ confirmReset() ? 'Kliknij ponownie, aby usunąć wszystko' : 'Usuń wszystkie dane' }}
+    </button>
+  </div>
+</ui-sheet>
